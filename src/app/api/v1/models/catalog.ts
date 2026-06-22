@@ -8,7 +8,9 @@ import {
   getSettings,
   getProviderNodes,
   getModelIsHidden,
+  getModelAliases,
 } from "@/lib/localDb";
+import { extractAliasBackedModels } from "./aliasBackedModels";
 import { appendNoThinkingVariants } from "@omniroute/open-sse/utils/noThinkingAlias";
 import { getAllEmbeddingModels } from "@omniroute/open-sse/config/embeddingRegistry";
 import { getAllImageModels } from "@omniroute/open-sse/config/imageRegistry";
@@ -1321,6 +1323,88 @@ export async function getUnifiedModelsResponse(
       }
     } catch (e) {
       console.log("Could not fetch custom models");
+    }
+
+    // Port of decolua/9router#730 — surface models registered ONLY through a model
+    // alias (`key_value` namespace `modelAliases`, value `"<providerKey>/<modelId>"`).
+    // Without this walk, a compatible-provider entry like `setModelAlias("kimi-k2.6",
+    // "custom/kimi-k2.6")` resolves at request time but never shows up in `/v1/models`.
+    // We respect the same gating as the static/custom listing path: provider must be
+    // active (or noAuth+unblocked), model must not be hidden, and the canonical alias
+    // entry must not already exist (so we don't shadow combo / synced / custom rows).
+    try {
+      const modelAliases = await getModelAliases();
+      const aliasBacked = extractAliasBackedModels(modelAliases);
+      for (const { providerKey, modelId } of aliasBacked) {
+        const canonicalProviderId = resolveCanonicalProviderId(providerKey);
+        if (!canonicalProviderId) continue;
+        if (
+          blockedProviders.has(providerKey) ||
+          blockedProviders.has(canonicalProviderId) ||
+          isNoAuthProviderBlocked(blockedProviders, canonicalProviderId, providerKey)
+        ) {
+          continue;
+        }
+
+        const alias = providerIdToAlias[canonicalProviderId] || providerKey;
+        if (
+          !activeAliases.has(alias) &&
+          !activeAliases.has(canonicalProviderId) &&
+          !activeAliases.has(providerKey)
+        ) {
+          continue;
+        }
+
+        if (getModelIsHidden(canonicalProviderId, modelId)) continue;
+
+        const aliasId = `${alias}/${modelId}`;
+        const rawPrefixedId = `${providerKey}/${modelId}`;
+        if (
+          models.some((m: any) => m?.id === aliasId) ||
+          models.some((m: any) => m?.id === rawPrefixedId)
+        ) {
+          continue;
+        }
+
+        const visionFields =
+          getVisionCapabilityFields(aliasId) || getVisionCapabilityFields(modelId);
+
+        if (includeAlias) {
+          models.push({
+            id: aliasId,
+            object: "model",
+            created: timestamp,
+            owned_by: canonicalProviderId,
+            permission: [],
+            root: modelId,
+            parent: null,
+            ...(visionFields || {}),
+          });
+        }
+        if (
+          includeCanonical &&
+          canonicalProviderId !== alias &&
+          !isNoAuthProviderKey(canonicalProviderId) &&
+          prefixRoutesToProvider(canonicalProviderId, canonicalProviderId)
+        ) {
+          const providerPrefixedId = `${canonicalProviderId}/${modelId}`;
+          if (models.some((m: any) => m?.id === providerPrefixedId)) continue;
+          const providerVisionFields =
+            getVisionCapabilityFields(providerPrefixedId) || getVisionCapabilityFields(modelId);
+          models.push({
+            id: providerPrefixedId,
+            object: "model",
+            created: timestamp,
+            owned_by: canonicalProviderId,
+            permission: [],
+            root: modelId,
+            parent: includeAlias ? aliasId : null,
+            ...(providerVisionFields || {}),
+          });
+        }
+      }
+    } catch (e) {
+      console.log("Could not fetch model aliases");
     }
 
     // Add managed fallback models for compatible providers that don't import a model list.
