@@ -8,6 +8,10 @@
 
 _In development — bullets added per PR; finalized at release._
 
+### ✨ New Features
+
+- **feat(cli-tools): multi-model support for Factory Droid** — the Droid card in `/dashboard/cli-tools` now accepts a list of models instead of a single slot, writing one `custom:OmniRoute-<i>` entry per model into `~/.factory/settings.json`. The route accepts `models: string[]` (preferred) or the legacy `model: string`, plus an optional `activeModel` to promote one entry to index 0. Reset/detect logic matches every `custom:OmniRoute-*` id so multi-model installs round-trip cleanly. Backed by a pure helper (`buildDroidCustomModels` / `normalizeDroidModelList` / `isOmniRouteCustomModel`) with 11 unit tests. Ported from upstream PR [decolua/9router#618](https://github.com/decolua/9router/pull/618). (thanks @anuragg-saxenaa)
+
 ### 📝 Maintenance
 
 - **chore(quality): release-green pre-flight validator + nightly signal** — new `npm run check:release-green` (`scripts/quality/validate-release-green.mjs`) reproduces the release-equivalent validation (full unit + vitest + ratchets + typecheck + lint, optional `--with-build` package-artifact) against the current working tree and classifies each red as **HARD** (real defect) vs **DRIFT** (ratchet, rebaselined at release) — purely diagnostic, never blocking contributors. A new `nightly-release-green` workflow runs it on the active release branch and opens/updates a tracking issue on hard failures. Closes the gap where the full gate (`ci.yml`) only ran on the release PR, so reds accrued silently on `release/**` and surfaced in layers at release time. (thanks @diegosouzapw)
