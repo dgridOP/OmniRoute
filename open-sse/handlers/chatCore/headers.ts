@@ -31,3 +31,22 @@ export function isNoMemoryRequested(
     .toLowerCase();
   return value === "true" || value === "1" || value === "yes";
 }
+
+/**
+ * Per-request opt-in to unconditionally strip `reasoning_content` from the
+ * non-streaming JSON response via the `x-omniroute-strip-reasoning` header.
+ * Some clients (e.g. Firecrawl AI SDK) have JSON parsers that break on this
+ * non-standard OpenAI extension even though it's syntactically valid, and even
+ * on reasoning-only messages that the default sanitizer keeps. Truthy values:
+ * `true` / `1` / `yes` (case-insensitive). Ported from upstream 9router#517
+ * (closes upstream #509). Reasoning is still captured for the replay cache
+ * before this header is consulted, so the cache feature is unaffected.
+ */
+export function isStripReasoningRequested(
+  headers: Record<string, unknown> | Headers | null | undefined
+): boolean {
+  const value = (getHeaderValueCaseInsensitive(headers, "x-omniroute-strip-reasoning") || "")
+    .trim()
+    .toLowerCase();
+  return value === "true" || value === "1" || value === "yes";
+}

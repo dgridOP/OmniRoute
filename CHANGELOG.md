@@ -8,6 +8,10 @@
 
 _In development — bullets added per PR; finalized at release._
 
+### ✨ New Features
+
+- **feat(sse): `x-omniroute-strip-reasoning` header to drop `reasoning_content` from non-streaming JSON** — opt-in per-request header that unconditionally removes `reasoning_content` from the final non-streaming Chat Completions payload (including reasoning-only messages and DeepSeek V4), for clients whose JSON parsers cannot tolerate the non-standard OpenAI extension (e.g. Firecrawl AI SDK `/extract`). Reasoning replay cache is unaffected — capture happens before the sanitize step. Ported from upstream [decolua/9router#517](https://github.com/decolua/9router/pull/517) (closes upstream #509 — thanks @anuragg-saxenaa).
+
 ### 📝 Maintenance
 
 - **chore(quality): release-green pre-flight validator + nightly signal** — new `npm run check:release-green` (`scripts/quality/validate-release-green.mjs`) reproduces the release-equivalent validation (full unit + vitest + ratchets + typecheck + lint, optional `--with-build` package-artifact) against the current working tree and classifies each red as **HARD** (real defect) vs **DRIFT** (ratchet, rebaselined at release) — purely diagnostic, never blocking contributors. A new `nightly-release-green` workflow runs it on the active release branch and opens/updates a tracking issue on hard failures. Closes the gap where the full gate (`ci.yml`) only ran on the release PR, so reds accrued silently on `release/**` and surfaced in layers at release time. (thanks @diegosouzapw)
