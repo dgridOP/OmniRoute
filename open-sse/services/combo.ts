@@ -2,7 +2,7 @@
  * Shared combo (model combo) handling with fallback support
  * Supports: priority, weighted, round-robin, random, least-used, cost-optimized,
  * reset-aware, reset-window, strict-random, auto, fill-first, p2c, lkgp,
- * context-optimized, and context-relay strategies
+ * context-optimized, context-relay, and fusion strategies
  */
 
 import {
@@ -118,6 +118,7 @@ import {
   recordStickyWeightedSuccess,
 } from "./combo/rrState.ts";
 import { validateResponseQuality, toRetryAfterDisplayValue } from "./combo/validateQuality.ts";
+import { handleFusionChat, type FusionTuning } from "./fusion.ts";
 import {
   TRANSIENT_FOR_SEMAPHORE,
   MAX_FALLBACK_WAIT_MS,
@@ -735,6 +736,38 @@ export async function handleComboChat({
       `Bypassing strategy — routing directly to pinned context model: ${pinnedModel}`
     );
     return handleSingleModelWithTimeout(body, pinnedModel);
+  }
+
+  // Fusion strategy: parallel panel + judge synthesis. Handled in a separate module
+  // because it neither iterates targets in order nor needs the failover/retry/credential
+  // gate machinery that follows — it fans out, then synthesizes once.
+  if (strategy === "fusion") {
+    const fusionModels = (combo.models || [])
+      .map((m) => {
+        if (typeof m === "string") return m;
+        if (m && typeof m === "object") {
+          const obj = m as Record<string, unknown>;
+          if (typeof obj.model === "string") return obj.model;
+        }
+        return null;
+      })
+      .filter((m): m is string => Boolean(m));
+    const cfg = config as Record<string, unknown>;
+    const judgeModel =
+      typeof cfg.judgeModel === "string" ? cfg.judgeModel : undefined;
+    const tuning =
+      cfg.fusionTuning && typeof cfg.fusionTuning === "object"
+        ? (cfg.fusionTuning as FusionTuning)
+        : undefined;
+    return handleFusionChat({
+      body,
+      models: fusionModels,
+      handleSingleModel: handleSingleModelWithTimeout,
+      log,
+      comboName: combo.name,
+      judgeModel,
+      tuning,
+    });
   }
 
   const nestingContext = nesting || {

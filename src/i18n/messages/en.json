@@ -2384,6 +2384,8 @@
     "resetAwareDesc": "Balances remaining quota against 5h and weekly resets, then round-robins similar scores",
     "strictRandom": "Strict Random",
     "strictRandomDesc": "Shuffle deck — uses each model once before reshuffling",
+    "fusion": "Fusion",
+    "fusionDesc": "Fans the prompt to every panel model in parallel, then a judge model synthesizes one final answer",
     "models": "Models",
     "autoBalance": "Auto-balance",
     "advancedSettings": "Advanced Settings",
