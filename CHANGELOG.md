@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### 🔧 Bug Fixes
+
+- **codex/translator**: normalize Codex custom/freeform tools (`apply_patch`, `type:"custom"` with no `parameters`) to a `{ input: string }` function schema instead of an empty schema — the empty schema made models invoke `apply_patch` with `{}`, breaking the Codex runtime which expects `{ input: string }`. Also map `custom_tool_call` / `custom_tool_call_output` input items and stream `apply_patch` tool calls via `custom_tool_call_input.delta`/`.done` events. (thanks @nstung463)
+
 ---
 
 ## [3.8.35] — 2026-06-23
