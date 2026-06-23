@@ -30,6 +30,7 @@ import {
   type CodexClientIdentity,
 } from "../config/codexIdentity.ts";
 import { getAccessToken } from "../services/tokenRefresh.ts";
+import { fetchImageAsBase64 } from "../translator/helpers/imageHelper.ts";
 import { sanitizeResponsesInputItems } from "../services/responsesInputSanitizer.ts";
 import { normalizeCodexVerbosity } from "../services/codexVerbosity.ts";
 import { getThinkingBudgetConfig, ThinkingMode } from "../services/thinkingBudget.ts";
@@ -819,7 +820,73 @@ export class CodexExecutor extends BaseExecutor {
     super("codex", PROVIDERS.codex);
   }
 
+  /**
+   * Prefetch remote image URLs and inline them as base64 data URIs.
+   *
+   * The Codex backend cannot fetch remote HTTP(S) images, so any `image_url`
+   * content part that points at a remote URL must be resolved to inline bytes
+   * before the request is sent upstream (closes #575). Runs ahead of the
+   * synchronous `transformRequest` pipeline so that path stays sync.
+   *
+   * Returns a NEW body with the resolved input — the original payload is left
+   * untouched so combo quality checks and other post-execute paths still see
+   * the request as the client sent it. When `body.input` is not an array (or
+   * there is nothing to fetch) the original body reference is returned as-is.
+   */
+  async prefetchImages(body: unknown): Promise<unknown> {
+    if (!body || typeof body !== "object" || Array.isArray(body)) return body;
+    const record = body as Record<string, unknown>;
+    if (!Array.isArray(record.input)) return body;
+
+    let mutated = false;
+    const input = await Promise.all(
+      record.input.map(async (item) => {
+        if (!item || typeof item !== "object" || Array.isArray(item)) return item;
+        const itemRecord = item as Record<string, unknown>;
+        if (!Array.isArray(itemRecord.content)) return item;
+
+        const content = await Promise.all(
+          itemRecord.content.map(async (part) => {
+            if (!part || typeof part !== "object" || Array.isArray(part)) return part;
+            const partRecord = part as Record<string, unknown>;
+            if (partRecord.type !== "image_url") return part;
+
+            const imageUrl = partRecord.image_url;
+            const url =
+              typeof imageUrl === "string"
+                ? imageUrl
+                : typeof (imageUrl as Record<string, unknown> | null)?.url === "string"
+                  ? ((imageUrl as Record<string, unknown>).url as string)
+                  : undefined;
+            const detail =
+              (imageUrl && typeof imageUrl === "object" && !Array.isArray(imageUrl)
+                ? (imageUrl as Record<string, unknown>).detail
+                : undefined) || "auto";
+            if (!url) return part;
+
+            mutated = true;
+            if (url.startsWith("data:")) {
+              return { type: "input_image", image_url: url, detail };
+            }
+            const fetched = await fetchImageAsBase64(url, { timeoutMs: 15000 });
+            return { type: "input_image", image_url: fetched?.url || url, detail };
+          })
+        );
+
+        return { ...itemRecord, content };
+      })
+    );
+
+    if (!mutated) return body;
+    return { ...record, input };
+  }
+
   async execute(input: ExecuteInput) {
+    const prefetchedBody = await this.prefetchImages(input.body);
+    if (prefetchedBody !== input.body) {
+      input = { ...input, body: prefetchedBody };
+    }
+
     const sessionId = this.getPromptCacheSessionId(
       input.credentials,
       input.body as Record<string, unknown> | null
