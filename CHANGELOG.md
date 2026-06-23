@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### 🔧 Bug Fixes
+
+- **antigravity-to-openai**: preserve the `required` array when translating Draft 2020-12 tool schemas (e.g. from OpenCode), stripping unsupported JSON Schema meta keywords while keeping mandatory arguments required so the model no longer calls tools without them. (thanks @anuragg-saxenaa)
+
 ---
 
 ## [3.8.35] — 2026-06-23
