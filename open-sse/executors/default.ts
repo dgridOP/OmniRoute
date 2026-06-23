@@ -14,7 +14,10 @@ import {
 } from "../services/claudeCodeCompatible.ts";
 import { getGigachatAccessToken } from "../services/gigachatAuth.ts";
 import { getRegistryEntry } from "../config/providerRegistry.ts";
-import { mergeClientAnthropicBeta } from "../config/anthropicHeaders.ts";
+import {
+  mergeClientAnthropicBeta,
+  normalizeAnthropicHeaderVariants,
+} from "../config/anthropicHeaders.ts";
 import { applyProviderRequestDefaults } from "../services/providerRequestDefaults.ts";
 import {
   detectFormat,
@@ -542,6 +545,8 @@ export class DefaultExecutor extends BaseExecutor {
         headers[betaKey] = mergeClientAnthropicBeta(headers[betaKey], clientBeta);
       }
     }
+
+    normalizeAnthropicHeaderVariants(headers);
 
     return headers;
   }

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **fix(sse):** dedupe case-variant Anthropic headers in the executor `buildHeaders` path — Node/undici's `fetch` merges `anthropic-version` and `Anthropic-Version` into a single `"v, v"` value that the Anthropic API rejects, so both case variants are now collapsed to one canonical lowercase header (same for `anthropic-beta`). (thanks @Delcado19)
+
 ---
 
 ## [3.8.35] — 2026-06-23
