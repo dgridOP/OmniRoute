@@ -13,6 +13,7 @@
 
 ### 🔧 Bug Fixes
 
+- **translators (Responses)**: forward AI SDK image content parts (`{ type: "image", image: "data:…;base64,…" }`) to the OpenAI Responses API as `input_image`, so images sent in the AI SDK shape reach Responses-API providers instead of being serialized to text. (thanks @mugnimaestra)
 - **db-backups**: make the database-import size cap configurable via `OMNIROUTE_DB_IMPORT_MAX_MB` (default 100 MB, 4 GB ceiling) so backups larger than 100 MB can be restored; error message now points to the env var and to VACUUM ([#4757](https://github.com/diegosouzapw/OmniRoute/pull/4757) — closes #4719, thanks @diegosouzapw).
 - **Onboarding**: add the missing `onboarding.tiers` step-title translation so the setup wizard no longer crashes with `MISSING_MESSAGE: onboarding.tiers` ([#4755](https://github.com/diegosouzapw/OmniRoute/pull/4755) — closes #4698, thanks @diegosouzapw).
 - **deepseek-web**: fold `role:"tool"` results into the single-prompt transcript (`messagesToPrompt`) so tool outputs reach the model instead of being silently dropped when a follow-up turn omits the `tools[]` array ([#4756](https://github.com/diegosouzapw/OmniRoute/pull/4756) — closes #4712, thanks @diegosouzapw).
