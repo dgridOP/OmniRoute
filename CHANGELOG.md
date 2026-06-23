@@ -21,6 +21,7 @@
 - **Storage VACUUM**: the scheduled VACUUM job now follows the Storage page settings (`scheduledVacuum` / `vacuumHour`) as the single source of truth; the legacy env-flag control path was removed ([#4726](https://github.com/diegosouzapw/OmniRoute/pull/4726) — thanks @rdself).
 - **Tiers**: no-auth providers are now counted as free, and the free-tier filter returns an empty set instead of falling through to every provider ([#4753](https://github.com/diegosouzapw/OmniRoute/pull/4753) — thanks @megamen32 / @diegosouzapw).
 - **Combos**: auto-promote `zeroLatencyOptimizationsEnabled` so legacy configs (pre-3.8.33 `fallbackCompressionMode="lite"`) round-trip cleanly on the first GUI edit ([#4774](https://github.com/diegosouzapw/OmniRoute/pull/4774) — thanks @KooshaPari / @diegosouzapw).
+- **Combos**: resolve a custom combo by its `id` and by a case-insensitive name as fallbacks, so the opencode `--model opencode-omniroute/<combo-slug>` dispatch path (which forwards a lowercased bare slug like `master-light` for a combo named `MASTER-LIGHT`) no longer fails with `Unable to determine provider for model`. Auto combos and raw models were unaffected because their ids already carry a prefix ([#4869](https://github.com/diegosouzapw/OmniRoute/pull/4869) — closes #4446, thanks @herjarsa).
 
 ### 📝 Maintenance
 
