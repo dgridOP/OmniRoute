@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- **fix(sse):** Kiro tool-schema sanitizer — strip unsupported JSON-Schema keywords (`anyOf`/`$ref`/`if`-`then`, etc.) and hash-truncate tool names >64 chars before dispatch, mapping the streamed tool-call name back for the client, so Kiro no longer rejects tool calls with `400 "Improperly formed request"`. (thanks @smarthomeblack)
+
 ---
 
 ## [3.8.35] — 2026-06-23
