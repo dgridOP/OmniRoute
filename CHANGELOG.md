@@ -10,6 +10,8 @@ _In development — bullets added per PR; finalized at release._
 
 ### 🔧 Bug Fixes
 
+- **feat(providers):** add DGrid AI gateway provider — OpenAI-compatible gateway at `api.dgrid.ai/v1` (alias `dgrid`, API-key auth, passthrough models). Free router tier (10 RPM / 100 RPD); a $5 lifetime top-up raises limits to 20 RPM / 1,000 RPD. (thanks @dgridOP)
+
 - **feat(providers):** add Pioneer AI (Fastino Labs) provider — OpenAI-compatible chat completions at `api.pioneer.ai/v1`. Registered with alias `pn`, `X-API-Key` auth, and a catalog of 10 open-tier serverless models (Qwen3, Llama 3.1/3.2, Gemma 3, SmolLM3). Free $75 credits, no credit card required. Gated enterprise models (Claude/GPT/Gemini) require prior fine-tuning on the Pioneer platform and are intentionally excluded from the catalog. (thanks @HikiNarou)
 
 - **feat(sse): auto-promote successful combo model**: a new opt-in `comboAutoPromoteEnabled` setting reorders a combo's persisted model list so that, when a combo model responds successfully, it is moved to position #1 for future requests. (thanks @arssnndr)
