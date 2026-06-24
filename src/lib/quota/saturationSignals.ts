@@ -24,6 +24,7 @@
  */
 
 import { createLogger } from "@/shared/utils/logger";
+import { updateAccountBuckets, type ClaudeUsageResult } from "./accountBuckets";
 import type { QuotaUnit, QuotaWindow } from "./dimensions";
 
 const log = createLogger("quota:saturation");
@@ -434,6 +435,14 @@ async function fetchAnthropicSaturation(
       (conn.authType === undefined || conn.authType === "oauth");
     if (hasOauthToken) {
       const usage = await deps.fetchUsage(conn as Record<string, unknown>);
+      // Update the per-window saturating buckets (Phase 3 #3) off the request
+      // hot path — this runs behind the 30s saturation cache. Fail-open: any
+      // bucket error must never affect the primary 0..1 saturation signal.
+      try {
+        updateAccountBuckets(connectionId, usage as ClaudeUsageResult, Date.now());
+      } catch {
+        // intentionally swallowed — buckets are additive, never gate-breaking
+      }
       const util = planUtilizationFromUsage(usage, dim.window);
       if (util !== null) return util;
     }
