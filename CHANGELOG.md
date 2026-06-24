@@ -8,6 +8,8 @@
 
 _In development — bullets added per PR; finalized at release._
 
+- **feat(providers):** add xAI Grok inbound translators (OpenAI Chat, OpenAI Responses, Anthropic, Gemini → xAI Responses) and reasoning/thinking patcher with multi-format budget mapping. (thanks @mugnimaestra)
+
 ---
 
 ## [3.8.35] — 2026-06-23
