@@ -73,6 +73,7 @@ import {
 import { supportsToolCalling } from "./modelCapabilities.ts";
 import { estimateTokens } from "./contextManager.ts";
 import { getSessionConnection } from "./sessionManager.ts";
+import { applySessionStickiness, recordStickyBinding } from "./combo/sessionStickiness.ts";
 import { orderTargetsByEvalScores } from "./evalRouting.ts";
 import { generateRoutingHints } from "./manifestAdapter";
 import type { RoutingHint } from "./manifestAdapter";
@@ -1555,7 +1556,7 @@ export async function handleComboChat({
       `Headroom ordering: ${orderedTargets[0]?.modelStr}${orderedTargets[0]?.connectionId ? ` (${orderedTargets[0].connectionId})` : ""} has most free capacity`
     );
   }
-
+  const _sticky = await applySessionStickiness(orderedTargets, body.messages as Array<{ role?: string; content?: unknown }>); orderedTargets = _sticky.targets;
   orderedTargets = orderTargetsByEvalScores(orderedTargets, config.evalRouting, log);
   orderedTargets = filterTargetsByRequestCompatibility(orderedTargets, body, log);
 
@@ -2090,8 +2091,7 @@ export async function handleComboChat({
                 }
               }
             }
-
-            // Record last known good provider (LKGP) for this combo/model (#919)
+            if (_sticky.messageHash && target.connectionId) recordStickyBinding(_sticky.messageHash, target.connectionId); // LKGP (#919):
             if (provider) {
               const connId = effectiveConnectionId || undefined;
               void (async () => {
