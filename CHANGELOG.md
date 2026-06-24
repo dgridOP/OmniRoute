@@ -8,6 +8,10 @@
 
 _In development — bullets added per PR; finalized at release._
 
+### ✨ New Features
+
+- **feat(oauth): Codex bulk-import endpoint** — new `POST /api/oauth/codex/import` route accepts one or more Codex (OpenAI) token JSON exports (flat or Codex CLI `auth.json` shape) and persists them as provider connections. Includes per-record normalization (`access_token`, `refresh_token`, JWT `id_token` decode, expiry synthesis), partial-success response, and Zod-validated request body. (thanks @beaaan)
+
 ---
 
 ## [3.8.35] — 2026-06-23
