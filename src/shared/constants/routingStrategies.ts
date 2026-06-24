@@ -10,6 +10,7 @@ export const ROUTING_STRATEGY_VALUES = [
   "cost-optimized",
   "reset-aware",
   "reset-window",
+  "headroom",
   "strict-random",
   "auto",
   "lkgp",
@@ -142,6 +143,13 @@ export const ROUTING_STRATEGIES: RoutingStrategyOption[] = [
     combosDescKey: "resetWindowDesc",
     settingsDescKey: "resetWindowDesc",
     icon: "schedule",
+  },
+  {
+    value: "headroom",
+    labelKey: "headroom",
+    combosDescKey: "headroomDesc",
+    settingsDescKey: "headroomDesc",
+    icon: "battery_charging_full",
   },
   {
     value: "strict-random",

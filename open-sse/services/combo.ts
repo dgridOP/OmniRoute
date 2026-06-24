@@ -179,6 +179,7 @@ import {
   preScreenTargets,
   orderTargetsByResetAwareQuota,
   orderTargetsByResetWindow,
+  orderTargetsByHeadroom,
   type PreScreenResult,
 } from "./combo/quotaStrategies.ts";
 
@@ -1542,6 +1543,17 @@ export async function handleComboChat({
   } else if (strategy === "context-optimized") {
     orderedTargets = sortTargetsByContextSize(orderedTargets);
     log.info("COMBO", `Context-optimized ordering: largest first (${orderedTargets[0]?.modelStr})`);
+  } else if (strategy === "headroom") {
+    orderedTargets = await orderTargetsByHeadroom(
+      orderedTargets,
+      combo.name,
+      log,
+      apiKeyAllowedConnections
+    );
+    log.info(
+      "COMBO",
+      `Headroom ordering: ${orderedTargets[0]?.modelStr}${orderedTargets[0]?.connectionId ? ` (${orderedTargets[0].connectionId})` : ""} has most free capacity`
+    );
   }
 
   orderedTargets = orderTargetsByEvalScores(orderedTargets, config.evalRouting, log);
